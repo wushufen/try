@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <meta name="MobileOptimized" content="320">
+    <meta name="HandheldFriendly" content="true">
+    <meta name="full-screen" content="yes">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="browsermode" content="application">
+    <meta name="x5-page-mode" content="app">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <title>svg</title>
+    <style>
+        body {
+            background: #fff;
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+    <pre>
+    svg: 根
+        *:
+            fill: 填充色
+            stroke: 描边色
+            stroke-width: 描边宽
+        rect: 矩形
+            x=0: 相对svg横坐标
+            y=0: 相对svg纵坐标
+            width: 宽
+            height: 高
+        circle: 圆
+            cx: 圆心x
+            cy: 圆心y
+            r: 半径
+        ellipse: 椭圆
+            cx: 圆心x
+            cy: 圆心y
+            rx: x轴半径
+            ry: y轴半径
+        polyline: 折线，有默认背景色，通过 fill="transparent" 去掉
+            points: 折点 ="x1 y1, x2 y2, ..."
+        polygon: 多边形，自动闭合
+            points: 折点 ="x1 y1, x2 y2, ..."
+        path: 路径
+            d: 命令="M x y  L x y  H x  V y  C x1 y1, x2 y2, x y  ...  z" ，大写绝对，小写相对
+                M: moveTo x y
+                L: lineTo
+                H: 水平画
+                V: 垂直画
+                A:
+                    rx
+                    ry
+                    x-axis-rotation
+                    large-arc-flag
+                    sweep-flag
+                    x
+                    y
+                C:
+                S:
+                Q:
+                T: 
+                Z: 闭合
+    </pre>
+    <svg title="xxx" width="500" height="500" viewBox="0 0 500 500">
+        <rect width="500" height="500" fill="transparent" stroke="#0af" stroke-width="2"></rect>
+        <rect x="10" y="0" width="100" height="100" rx="20" ry="20"></rect>
+        <circle cx="200" cy="50" r="50"></circle>
+        <ellipse cx="300" cy="50" rx="25" ry="50"></ellipse>
+        <line x1="10" y1="150" x2="200" y2="150" stroke="#0af"></line>
+        <polyline points="10 200,100 220,200 200" fill="transparent" stroke="#0af"></polyline>
+        <polygon points="10 300,100 320,200 300" fill="transparent" stroke="#0af"></polygon>
+        <path d="m 10 350, h 100 v 50, z" fill="transparent" stroke="#0af"></path>
+        <path d="m 200 350,
+            c 0 50 100 50 100 0,
+            s 50 -50 50 0 
+            " fill="transparent"
+            stroke="#0af"></path>
+        <path d="m 10 450
+            q 50 50 100 0
+            t 50 0"></path>
+        <path d="m 200 450,  a 1 1 0  0 1  100 0,  a 1 1 0  0 1  -100 0" stroke="#0af"></path>
+    </svg>
+    <div>
+        abc
+    </div>
+</body>
+
+</html>
