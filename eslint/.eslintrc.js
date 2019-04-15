@@ -1,16 +1,16 @@
 module.exports = {
   "parserOptions": {
     // 支持 es6 模块
-    "sourceType": "module"
+    "sourceType": "module",
   },
   // 运行环境
   "env": {
     "browser": true,
-    "node": true
+    "node": true,
   },
   // eslint-plugin-vue
   "plugins": [
-    "vue"
+    "vue",
   ],
   "extends": [
     "eslint:recommended",
@@ -54,7 +54,7 @@ module.exports = {
     // ===
     "eqeqeq": 1,
     // console.xxx
-    "no-console": [1, { "allow": ["warn", "error"] }]
+    "no-console": [1, { "allow": ["warn", "error"] }],
   },
   "globals": {
     // wxmp
@@ -67,7 +67,5 @@ module.exports = {
     // ...
     "$": true,
     "ajax": true,
-    "ajax2": true,
-    "http": true,
   }
 }
