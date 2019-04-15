@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
 
 
+# .git/hooks/pre-commit
+: << !
+#!/usr/bin/env bash
+if [ -f ".githook" ]; then . ".githook"; fi
+!
+
+
 # eslint exists
 eslint="./node_modules/.bin/eslint"
-if [[ ! -f $eslint ]]; then
+if [[ ! $(command -v $eslint) ]]; then
   eslint="eslint"
-  if [[ ! -n $(command -v $eslint) ]]; then
-    # has not eslint
+  if [[ ! $(command -v $eslint) ]]; then
     # npm i -g eslint
     echo -e "\033[31m  please install eslint: npm i -g eslint  \033[0m"
     exit 1
-    exit 0
   fi
 fi
 
 
 # files
-files=$(git diff --cached --name-only | egrep "(.js|vue)$")
+ext=".(js|jsx|ts|vue)$"
+files=$(git diff --cached --name-only | egrep $ext)
 
 
 # -deleted
@@ -28,29 +34,29 @@ done
 
 
 # has not files to eslint
-files=$(echo "$files" | egrep -v "^$")
-if [[ -z $files ]]; then
+if [[ ! $(echo "$files" | egrep "\w") ]]; then
   # echo "has not files to eslint"
   exit 0
 fi
 
 
 # fix
+output=$($eslint $files --fix)
+output=$($eslint $files --quiet --format visualstudio)
+code=$?
+
+
 # add again
-rs=$($eslint $files --fix --format visualstudio)
 git add $files
 
 
-# error warning with color
-rs=${rs//": error "/" \033[31m [error] \033[0m "}
-# rs=${rs//": warning "/"\033[33m [warning] \033[0m"}
-rs=$(echo "$rs" | egrep "error")
+# color
+output=${output//"error"/"\033[31merror\033[0m"}
 
 
-# [error]
-if [[ "$rs" = *"[error]"* ]]; then
-  echo -e "$rs"
+# error exit?
+if [[ $code != 0 ]]; then
+  echo -e "$output"
   echo -e "\033[31m  ERROR  \033[0m"
   exit 1
-  exit 0
 fi
