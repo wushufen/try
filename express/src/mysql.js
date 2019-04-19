@@ -1,5 +1,5 @@
-var mysql = require('mysql')
-var mysqlPoll = mysql.createPool({
+let mysql = require('mysql')
+let mysqlPoll = mysql.createPool({
   host: 'localhost',
   user: 'root',
   password: '123456',
@@ -7,8 +7,10 @@ var mysqlPoll = mysql.createPool({
 })
 
 let startDate = new Date
-let times = 5000
+let times = 100
 console.log('startDate')
+
+
 for (let i = 0; i < times; i++) {
   mysqlPoll.getConnection(function (error, connection) {
     var sql = 'select * from user'
