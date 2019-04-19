@@ -1,15 +1,25 @@
 var mysql = require('mysql')
-var connection = mysql.createConnection({
+var mysqlPoll = mysql.createPool({
   host: 'localhost',
   user: 'root',
   password: '123456',
   database: 'test'
 })
 
-connection.connect()
-
-
-var sql = 'select * from user'
-connection.query(sql, function (error, results, fields) {
-  console.log(results)
-})
+let startDate = new Date
+let times = 5000
+console.log('startDate')
+for (let i = 0; i < times; i++) {
+  mysqlPoll.getConnection(function (error, connection) {
+    var sql = 'select * from user'
+    connection.query(sql, function (error, results, fields) {
+      if(i == times - 1){
+        if(!error){
+          let endDate = new Date
+          console.log((endDate - startDate) / 1000)
+        }
+      }
+      connection.release()
+    })
+  })
+}

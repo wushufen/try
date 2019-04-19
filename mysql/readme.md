@@ -49,3 +49,9 @@ create table $tableName (
 
 create table if not exists $tableName (...)
 ```
+
+## 新增数据
+```sql
+insert into $tableName values($value, ...)
+insert into $tableName ($filed, ...) values($value, ...)
+```
