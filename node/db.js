@@ -9,12 +9,12 @@ let config = {
 class DB {
   constructor(){
     Object.assign(this, {
-      poll: mysql.createPool(config)
+      poll: mysql.createPool(config),
     })
   }
   // list: []
   // get: {}||0
-  // save: 
+  // save:
   // error: errorno
   query(sql, args, isOne){
     return new Promise((resolve, reject)=>{
@@ -24,7 +24,7 @@ class DB {
           console.log('result:', result, '\n')
 
           if (!error) {
-            result = isOne? result[0]: result
+            result = isOne ? result[0] : result
             result = result || 0
           } else {
             result = error.errno || false
@@ -48,7 +48,7 @@ class DB {
       }
     }
     return {
-      sql: pls.length? ' where ' + pls.join(' and '): '',
+      sql: pls.length ? ' where ' + pls.join(' and ') : '',
       values: kvs // [{k:v}, {k2:v2}]
     }
   }
@@ -109,7 +109,7 @@ class DB {
 
     return rs
   }
-  list(tableName, data={}, options={}, isOne){
+  list(tableName, data = {}, options = {}, isOne){
     let sql = 'select * from ??'
     let args = [tableName]
 
@@ -119,11 +119,11 @@ class DB {
 
     return this.query(sql, args, isOne)
   }
-  get(tableName, data={}, options={}){
+  get(tableName, data = {}, options = {}){
     return this.list(tableName, data, options, true)
   }
-  delete(tableName, data={}){
-    let sql = `delete from ??`
+  delete(tableName, data = {}){
+    let sql = 'delete from ??'
     let args = [tableName]
 
     let where = this.getWhere(data)
@@ -141,7 +141,7 @@ class DB {
 let db = new DB
 
 !(async function(){
-  // var rs = await db.query('drop table ??', ['test'])
+  var rs = await db.query('drop table ??', ['test'])
   // var rs = await db.query('create table if not exists ?? (?? int auto_increment not null primary key, ?? text)', ['test', 'id', 'name'])
   // var rs = await db.query('alter table ?? add column ?? text', ['test', 'age'])
   // var rs = await db.query('insert into ?? (??, ??, ??) values(?, ?, ?) on duplicate key update ??=?, ??=?, ??=?', ['test', 'id', 'name', 'age', 1, 'wsf', 333, 'id', 1, 'name', 'wsf', 'age', 333])
@@ -151,13 +151,17 @@ let db = new DB
 
   // var rs = await db.createTable('test', {id:1, name: 'wsf'})
   // var rs = await db.addColumns('test', {age: 18})
-  var rs = await db.save('test', {id:1, 'name':'`~!@#$%^&*()_+-=//\\"\'--wsf3;', age: 1})
+
+  // var rs = await db.save('test', {id: 1, name: '`~!@#$%^&*()_+-=//\\"\'--wsf3;', age: 1})
+  var rs = await db.save('test', {name: 'wsf', age: 1})
+  var rs = await db.save('test', {name: 'wsf', age: 1})
+
   // var rs = await db.list('test')
-  // var rs = await db.list('test', {id:2, name: 22})
+  var rs = await db.list('test', {name: 'wsf', age: 1})
   // var rs = await db.get('test', {id:2, name: 22})
   // var rs = await db.delete('test')
 
   // var rs = await db.getWhere({id:1, name: 2})
-  
+
   console.log(JSON.stringify(rs, null, ''))
 }())
