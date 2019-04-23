@@ -17,11 +17,11 @@ class DB {
   // save: 
   // error: errorno
   query(sql, args, isOne){
-    console.log('====', sql, args, '====')
     return new Promise((resolve, reject)=>{
       this.poll.getConnection((error, connection)=>{
-        connection.query(sql, args, (error, result, fields)=>{
-          // console.log(result)
+        let query = connection.query(sql, args, (error, result, fields)=>{
+          console.log('sql: ', query.sql)
+          console.log('result:', result, '\n\n')
           if (!error) {
             result = isOne? result[0]: result
             result = result || 0
@@ -33,49 +33,87 @@ class DB {
       })
     })
   }
-  getSqlFields(data){
-    return '`' + Object.keys(data).join('`, `') + '`'  // '`id`, `name`'
-  }
-  getSqlValues(data){
-    return Object.values(data).map(value=>'?').join(', ') // '?, ?'
-  }
-  getSqlWhere(data){
-    let fields = Object.keys(data)
-    if (fields.length) {
-      return  '`' + Object.keys(data).join('`=? and `') + '`=?' // '`id`=?, `name`=?'
+  getWhere(data){
+    let pls = []
+    let kvs = []
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        const value = data[key]
+        let kv = {}
+        kv[key] = value
+        pls.push('?')
+        kvs.push(kv)
+      }
     }
-    return ''
+    return {
+      sql: pls.length? ' where ' + pls.join(' and '): '',
+      values: kvs // [{k:v}, {k2:v2}]
+    }
   }
-  createTable(tableName, data){
+  createTable(tableName, data = {}){
+    let sql = 'create table if not exists ?? '
+    let args = [tableName]
 
-  }
-  save(tableName, data){
-    let fields = Object.keys(data)
-    let values = Object.values(data)
-    let sqlFields = this.getSqlFields(data)
-    let sqlValues = this.getSqlValues(data)
-    let sqlUpdateSet = fields.map(field=>'`' + field + '`=values(`' + field + '`)').join(', ') // '`id`=values(`id`), `name`=values(`name`)'
-
-    let sql = `insert into ?? (${sqlFields}) values (${sqlValues}) on duplicate key update ${sqlUpdateSet}`
-    let args = [tableName].concat(values)
+    sql += '('
+    sql += '`id` int auto_increment not null primary key'
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        if (key != 'id') {
+          sql += ', ?? text'
+          args.push(key)
+        }
+      }
+    }
+    sql += ')'
 
     return this.query(sql, args)
   }
-  list(tableName, data={}, options={}, isOne){
-    let values = Object.values(data)
-    let sqlWhere = this.getSqlWhere(data)
+  addColumns(tableName, data) {
+    // `
+    // select column_name
+    // from information_schema.columns
+    // where table_schema=database()
+    // and table_name='user'
+    // and column_name='xid'
+    // `
+    let all = []
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        let sql = 'alter table ?? add column ?? text'
+        let args = [tableName, key]
+        let promise = new Promise(resolve=>{
+          this.query(sql, args).finally(()=>{
+            resolve()
+          })
+        })
+        all.push(promise)
+      }
+    }
+    return Promise.all(all)
+  }
+  async save(tableName, data){
+    let sql = 'insert into ?? set ? on duplicate key update ?'
+    let args = [tableName, data, data]
 
-    let sql = `select * from ??`
-    if (sqlWhere) {
-      sql += ` where ${sqlWhere}`
+    let rs = await this.query(sql, args)
+    if (rs == 1146) {
+      await this.createTable(tableName, data)
+      return this.query(sql, args)
     }
-    if (options.orderBy) {
-      sql += ' order by `' + options.orderBy + '`'
+    if (rs == 1054) {
+      await this.addColumns(tableName, data)
+      return this.query(sql, args)
     }
-    if (options.pageNo) {
-      // todo
-    }
-    let args = [tableName].concat(values)
+
+    return rs
+  }
+  list(tableName, data={}, options={}, isOne){
+    let sql = 'select * from ??'
+    let args = [tableName]
+
+    let where = this.getWhere(data)
+    sql += where.sql
+    args.push(...where.values)
 
     return this.query(sql, args, isOne)
   }
@@ -83,16 +121,16 @@ class DB {
     return this.list(tableName, data, options, true)
   }
   delete(tableName, data={}){
-    let values = Object.values(data)
-    let sqlWhere = this.getSqlWhere(data)
-
     let sql = `delete from ??`
-    if (sqlWhere) {
-      sql += ` where ${sqlWhere}`
-    } else {
-      throw 'can not delete all'
+    let args = [tableName]
+
+    let where = this.getWhere(data)
+    sql += where.sql
+    args.push(...where.values)
+
+    if (!where.sql) {
+      throw 'delete without where !!!'
     }
-    let args = [tableName].concat(values)
 
     return this.query(sql, args)
   }
@@ -101,8 +139,23 @@ class DB {
 let db = new DB
 
 !(async function(){
-  // db.delete('user')
-  db.save('user', {id:3, name:'wsf222'})
-  let rs = await db.get('userx', {id:1})
+  // var rs = await db.query('drop table ??', ['test'])
+  // var rs = await db.query('create table if not exists ?? (?? int auto_increment not null primary key, ?? text)', ['test', 'id', 'name'])
+  // var rs = await db.query('alter table ?? add column ?? text', ['test', 'age'])
+  // var rs = await db.query('insert into ?? (??, ??, ??) values(?, ?, ?) on duplicate key update ??=?, ??=?, ??=?', ['test', 'id', 'name', 'age', 1, 'wsf', 333, 'id', 1, 'name', 'wsf', 'age', 333])
+  // var rs = await db.query('insert into ?? set ? on duplicate key update ?', ['test', {id:2, name:2}, {id:2, name:22}])
+  // var rs = await db.query('select * from ?? where ??=? and ??=?', ['test', 'id', 1, 'name', 222])
+  // var rs = await db.query('delete from ?? where ??=? and ??=?', ['test', 'id', 1, 'name', 222])
+
+  // var rs = await db.createTable('test', {id:1, name: 'wsf'})
+  // var rs = await db.addColumns('test', {age: 18})
+  var rs = await db.save('test', {id:3, name:'wsf3', age: 18})
+  // var rs = await db.list('test')
+  // var rs = await db.list('test', {id:2, name: 22})
+  // var rs = await db.get('test', {id:2, name: 22})
+  // var rs = await db.delete('test')
+
+  // var rs = await db.getWhere({id:1, name: 2})
+  
   console.log(JSON.stringify(rs, null, ''))
 }())
