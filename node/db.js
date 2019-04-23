@@ -21,14 +21,16 @@ class DB {
       this.poll.getConnection((error, connection)=>{
         let query = connection.query(sql, args, (error, result, fields)=>{
           console.log('sql: ', query.sql)
-          console.log('result:', result, '\n\n')
+          console.log('result:', result, '\n')
+
           if (!error) {
             result = isOne? result[0]: result
             result = result || 0
-            resolve(result)
           } else {
-            resolve(error.errno)
+            result = error.errno || false
+            console.log('error result:', result, '\n')
           }
+          resolve(result)
         })
       })
     })
@@ -149,7 +151,7 @@ let db = new DB
 
   // var rs = await db.createTable('test', {id:1, name: 'wsf'})
   // var rs = await db.addColumns('test', {age: 18})
-  var rs = await db.save('test', {id:3, name:'wsf3', age: 18})
+  var rs = await db.save('test', {id:1, 'name':'`~!@#$%^&*()_+-=//\\"\'--wsf3;', age: 1})
   // var rs = await db.list('test')
   // var rs = await db.list('test', {id:2, name: 22})
   // var rs = await db.get('test', {id:2, name: 22})
