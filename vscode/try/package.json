@@ -1,0 +1,41 @@
+{
+	"name": "auto-style",
+	"displayName": "auto style",
+	"description": "auto create less/scss from your html/vue file",
+	"version": "0.0.1",
+	"publisher":"wushufen",
+	"engines": {
+		"vscode": "^1.33.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:autoStyle"
+	],
+	"main": "./extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "autoStyle",
+				"title": "autoStyle"
+			}
+		]
+	},
+	"scripts": {
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"test": "node ./node_modules/vscode/bin/test"
+	},
+	"devDependencies": {
+		"typescript": "^3.3.1",
+		"vscode": "^1.1.28",
+		"eslint": "^5.13.0",
+		"@types/node": "^10.12.21",
+		"@types/mocha": "^2.2.42"
+	},
+	"dependencies": {
+		"jsdom": "^15.0.0",
+		"parse5": "^5.1.0",
+		"scss-parser": "^1.0.3"
+	}
+}
