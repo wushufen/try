@@ -3,7 +3,8 @@ let config = {
   host: 'localhost',
   user: 'root',
   password: '123456',
-  database: 'test'
+  database: 'test',
+  multipleStatements: true,
 }
 
 class DB {
@@ -16,25 +17,37 @@ class DB {
   // get: {}||0
   // save:
   // error: errorno
-  query(sql, args, isOne){
+  query(sql, args){
     return new Promise((resolve, reject)=>{
       this.poll.getConnection((error, connection)=>{
+        if (error) {
+          resolve({
+            error
+          })
+        }
+
         let query = connection.query(sql, args, (error, result, fields)=>{
           console.log('sql: ', query.sql)
           console.log('result:', result, '\n')
 
-          if (!error) {
-            result = isOne ? result[0] : result
-            result = result || 0
-          } else {
-            result = error.errno || false
-            console.log('error result:', result, '\n')
-          }
-          resolve(result)
+          resolve({
+            error,
+            result,
+            fields,
+          })
         })
       })
     })
   }
+  /**
+   * @param {Object} data
+   * @returns {Object}
+   *  sql: ' where ? and ?'
+   *  values: [
+   *    {k1: v1},
+   *    {k2: v2},
+   *  ]
+   */
   getWhere(data){
     let pls = []
     let kvs = []
@@ -98,18 +111,37 @@ class DB {
     let args = [tableName, data, data]
 
     let rs = await this.query(sql, args)
-    if (rs == 1146) {
-      await this.createTable(tableName, data)
-      return this.query(sql, args)
-    }
-    if (rs == 1054) {
-      await this.addColumns(tableName, data)
-      return this.query(sql, args)
+    if (rs.error) {
+      if (rs == 1146) {
+        await this.createTable(tableName, data)
+        return this.query(sql, args)
+      }
+      if (rs == 1054) {
+        await this.addColumns(tableName, data)
+        return this.query(sql, args)
+      }
     }
 
     return rs
   }
-  list(tableName, data = {}, options = {}, isOne){
+  list(tableName, data = {}, options = {pageNo: 1, pageSize: 1000}){
+    let sql = 'select count(*) as total from ??; select * from ??'
+    let args = [tableName, tableName]
+
+    let where = this.getWhere(data)
+    sql += where.sql
+    args.push(...where.values)
+
+    if (options.pageNo) {
+      sql += ' limit ?,?'
+      let pageSize = options.pageSize || 10
+      let index = (options.pageNo - 1) * pageSize
+      args.push(index, pageSize)
+    }
+
+    return this.query(sql, args)
+  }
+  get(tableName, data = {}, options = {}){
     let sql = 'select * from ??'
     let args = [tableName]
 
@@ -117,10 +149,7 @@ class DB {
     sql += where.sql
     args.push(...where.values)
 
-    return this.query(sql, args, isOne)
-  }
-  get(tableName, data = {}, options = {}){
-    return this.list(tableName, data, options, true)
+    return this.query(sql, args, true)
   }
   delete(tableName, data = {}){
     let sql = 'delete from ??'
@@ -141,27 +170,32 @@ class DB {
 let db = new DB
 
 !(async function(){
-  var rs = await db.query('drop table ??', ['test'])
+  // var rs = await db.query('drop table ??', ['test'])
   // var rs = await db.query('create table if not exists ?? (?? int auto_increment not null primary key, ?? text)', ['test', 'id', 'name'])
   // var rs = await db.query('alter table ?? add column ?? text', ['test', 'age'])
   // var rs = await db.query('insert into ?? (??, ??, ??) values(?, ?, ?) on duplicate key update ??=?, ??=?, ??=?', ['test', 'id', 'name', 'age', 1, 'wsf', 333, 'id', 1, 'name', 'wsf', 'age', 333])
   // var rs = await db.query('insert into ?? set ? on duplicate key update ?', ['test', {id:2, name:2}, {id:2, name:22}])
   // var rs = await db.query('select * from ?? where ??=? and ??=?', ['test', 'id', 1, 'name', 222])
   // var rs = await db.query('delete from ?? where ??=? and ??=?', ['test', 'id', 1, 'name', 222])
+  // var rs = await db.query('select * from test where id=1; select count(*) as total from test; ')
 
   // var rs = await db.createTable('test', {id:1, name: 'wsf'})
   // var rs = await db.addColumns('test', {age: 18})
 
   // var rs = await db.save('test', {id: 1, name: '`~!@#$%^&*()_+-=//\\"\'--wsf3;', age: 1})
-  var rs = await db.save('test', {name: 'wsf', age: 1})
-  var rs = await db.save('test', {name: 'wsf', age: 1})
+  // var rs = await db.save('test', {name: 'wsf', age: 1})
+  // var rs = await db.save('test', {name: 'wsf', age: 1})
 
   // var rs = await db.list('test')
-  var rs = await db.list('test', {name: 'wsf', age: 1})
+  // var rs = await db.list('test', {name: 'wsf', age: 1})
+  var rs = await db.list('test', {}, {pageNo: 1, pageSize: 2})
+
   // var rs = await db.get('test', {id:2, name: 22})
+
   // var rs = await db.delete('test')
 
-  // var rs = await db.getWhere({id:1, name: 2})
+  // var rs = await db.getWhere({id: 1, name: 2})
 
-  console.log(JSON.stringify(rs, null, ''))
+  // console.log(JSON.stringify(rs, null, ''))
+  console.log(rs)
 }())

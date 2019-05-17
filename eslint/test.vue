@@ -8,6 +8,7 @@
     </table>
   </div>
 </template>
+
 <script>
 var str = 'string'
 var s = 's'
@@ -22,20 +23,21 @@ export default {
 </script>
 <style>
 .x {
-width: 1px;
+  width: 1px;
 }
 </style>
 <style lang="less" scoped>
 .x {
-.x {
-width: 1px;
-}
+  .x {
+    width: 1px;
+  }
 }
 </style>
 <style lang="scss" scoped>
 .x {
-.x {
-width: 1px;
-}
+  .x {
+    width: 1px;
+    background: url("abcf:;awef");
+  }
 }
 </style>

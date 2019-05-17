@@ -1,0 +1,43 @@
+CODE SETTINGS SYNC UPLOAD SUMMARY
+Version: 3.2.9
+--------------------
+GitHub Token: 0d8c319234be36146cc443f69414182ad4749e2e
+GitHub Gist: b890d22159d5b3c7123645ec4c8f340e
+GitHub Gist Type: Secret
+
+Restarting Visual Studio Code may be required to apply color and file icon theme.
+--------------------
+Files Uploaded:
+  extensions.json > extensions.json
+  keybindings.json > keybindings.json
+  settings.json > settings.json
+  ejs.for.code-snippets > snippets|ejs.for.code-snippets
+  ejs.if.code-snippets > snippets|ejs.if.code-snippets
+  ejs.out.code-snippets > snippets|ejs.out.code-snippets
+  html.json > snippets|html.json
+  vue-html.json > snippets|vue-html.json
+
+Extensions Ignored:
+  No extensions ignored.
+
+Extensions Removed:
+  No extensions removed.
+
+Extensions Added:
+  30-seconds-of-code v1.0.0
+  auto-rename-tag v0.0.15
+  auto-style v0.0.1
+  code-runner v0.9.9
+  code-settings-sync v3.2.9
+  gitlens v9.7.1
+  less2html v0.0.2
+  minapp-vscode v1.13.3
+  open-in-browser v2.0.0
+  tinypng v0.2.0
+  vetur v0.20.0
+  vetur-wepy v0.13.6
+  vscode-eslint v1.8.2
+  vscode-html-to-css v1.1.7
+  vscode-multiclip v0.1.5
+--------------------
+Done.
