@@ -10,36 +10,18 @@
 
 <body>
   <div id="app">
-    <h1 title="heading">heading</h1>
-    <input type="checkbox" name="" id="">
     <ul>
-      <li>
-        item
-        <button>btn</button>
+      <li v-for="item in list" v-if="item" @click.prevent.stop="click" :class="{active:item}" :style="{}">
+        {{item}}
       </li>
     </ul>
   </div>
   <script src="domDiff.js"></script>
-  <script id="tpl" type="text">
-    <div id="app">
-      <h1 title="heading2">heading2</h1>
-      <input type="radio" name="" id="">
-      <ul>
-        <li>
-          item2
-        </li>
-      </ul>
-    </div>
-  </script>
   <script>
-    // setTimeout(() => {
-    //   diff(app, parse(tpl.innerHTML))
-    // }, 2000);
-  </script>
-  <script>
-    /*! @preserve https://github.com/wusfen */
     function wutpl(tpl) {
       var code = tpl
+        .replace(/&lt;/g, '<') // <
+        .replace(/&gt;/g, '>') // >
         .replace(/<%=(.*?)%>/g, '\f_html_+= $1\f') // <%= %>
         .replace(/<%(.*?)%>/g, '\f$1\f') // <% %>
         .replace(/(^|\f)([\s\S]*?)(\f|$)/g, function ($, $1, $2, $3) { // \f html \f
@@ -51,49 +33,15 @@
         })
       return Function('_data_', 'var _html_="";with(_data_){' + code + '}return _html_')
     }
-
-    // ========== 示例与解析 ==========
-
-    // 模板
-    var tpl = `
-<div id="app">
-<ul>
-    <% for(var i=0; i<list.length; i++){ %>
-    <li>
-        <%= list[i].name %>
-    </li>
-    <% } %>
-</ul>
-</div>
-`
-
-    // 编译模板
-    var render = wutpl(tpl)
-
-    // 渲染数据
-    var html = render({
-      list: [
-        { id: 1, name: 'wsf' },
-        { id: 2, name: 'Tom' }
-      ]
-    })
-
-
-    // 输出结果
-    console.log(html)
-    diff(app, parse(html))
-
-    setInterval(() => {
-      var html = render({
-        list: [
-          { id: 1, name: 'wsf1' },
-          { id: 2, name: 'Tom' },
-          { id: 2, name: 'Tom2' },
-          { id: 2, name: 'Tom' },
-        ]
-      })
-      diff(app, parse(html))
-    }, 000);
+  </script>
+  <script>
+    // var render = wutpl(app.outerHTML)
+    // setInterval(() => {
+    //   var html = render({
+    //     date: new Date
+    //   })
+    //   diff(app, parse(html))
+    // }, 3000);
 
   </script>
 </body>
