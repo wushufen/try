@@ -1,48 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
+  <style>
+    .active{
+      background: red
+    }
+  </style>
 </head>
 
 <body>
   <div id="app">
+    <input v-model="model">
+    <button @click="add">+</button>
+    <h1 v-if="model" :title="title">{{model}}</h1>
     <ul>
-      <li v-for="item in list" v-if="item" @click.prevent.stop="click" :class="{active:item}" :style="{}">
+      <li v-for="(item,i) in list" xv-if="item" :class="{active:!item}" :style="{color:'#0af'}">
+        <input v-model="list[i]">
         {{item}}
+        <button @click="remove(i)">-</button>
       </li>
     </ul>
+    <svg width="200" height="200">
+      <polygon
+        points="10 10, 20 20"
+        style="fill:#0af"></polygon>
+        <!-- <polygon style="fill:#0af" :points="points"></polygon> -->
+    </svg>
   </div>
   <script src="domDiff.js"></script>
   <script>
-    function wutpl(tpl) {
-      var code = tpl
-        .replace(/&lt;/g, '<') // <
-        .replace(/&gt;/g, '>') // >
-        .replace(/<%=(.*?)%>/g, '\f_html_+= $1\f') // <%= %>
-        .replace(/<%(.*?)%>/g, '\f$1\f') // <% %>
-        .replace(/(^|\f)([\s\S]*?)(\f|$)/g, function ($, $1, $2, $3) { // \f html \f
-          return '\n_html_+= "' + $2
-            .replace(/\\/g, '\\\\') // \  ->  '\\'
-            .replace(/\r?\n/g, '\\n') // \n  ->  '\\n'
-            .replace(/"/g, '\\"') // "  ->  '\\"'
-            + '"\n'
-        })
-      return Function('_data_', 'var _html_="";with(_data_){' + code + '}return _html_')
-    }
-  </script>
-  <script>
-    // var render = wutpl(app.outerHTML)
-    // setInterval(() => {
-    //   var html = render({
-    //     date: new Date
-    //   })
-    //   diff(app, parse(html))
-    // }, 3000);
+    var vm = new VM({
+      el: app,
+      data: {
+        model: 'model',
+        list: []
+      },
+      computed: {
+        title: function(){
+          return new Date
+        },
+        nn: function(){
+          return this.n + 10
+        }
+      },
+      methods: {
+        update: function() {
+          function loop(params) {
+            // vm.points = [1,2,3,4,5].map(function(){
+            //   return Math.random()*200 + ' ' +Math.random()*200
+            // }).join(', ')
 
+            setTimeout(function(){
+              loop()
+            }, 500);
+          }
+          loop()
+        },
+        add: function(){
+          this.list.push(this.model)
+          this.model = ''
+        },
+        remove: function(i){
+          this.list.splice(i,1)
+        }
+      },
+      mounted: function() {
+        // this.update()
+      }
+    })
   </script>
 </body>
 
