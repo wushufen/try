@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app">
+    <h1>{{title}}</h1>
+    <ul>
+      <li @click="click" @click.prevent="click2">
+        item
+      </li>
+    </ul>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script>
+    var vue = new Vue({
+      render(h) {
+        var vnode = h('div', {
+          on: {}
+        }, ['abc', 'efg'])
+        console.log(vnode)
+        return vnode
+      },
+      el: '#app',
+      data: {
+        title: 'hello world'
+      },
+      methods: {
+        click() {
+          console.log('click')
+        },
+        click2() {
+          console.log('click2')
+        }
+      }
+    })
+    vue.$mount('#app')
+  </script>
+</body>
+
+</html>

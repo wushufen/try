@@ -7,7 +7,7 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
   <style>
-    .active{
+    .active {
       background: red
     }
   </style>
@@ -16,20 +16,16 @@
 <body>
   <div id="app">
     <input v-model="model">
-    <button @click="add">+</button>
-    <h1 v-if="model" :title="title">{{model}}</h1>
+    <h1 :title="model">{{model}}</h1>
     <ul>
-      <li v-for="(item,i) in list" xv-if="item" :class="{active:!item}" :style="{color:'#0af'}">
-        <input v-model="list[i]">
+      <li v-for="(item,i) in list" v-if="item" :style="{width:item+'px'}" :class="{active:item==10}">
         {{item}}
         <button @click="remove(i)">-</button>
       </li>
     </ul>
     <svg width="200" height="200">
-      <polygon
-        points="10 10, 20 20"
-        style="fill:#0af"></polygon>
-        <!-- <polygon style="fill:#0af" :points="points"></polygon> -->
+      <!-- <polygon points="10 10, 20 20" style="fill:#0af"></polygon> -->
+      <polygon style="fill:#0af" :points="points"></polygon>
     </svg>
   </div>
   <script src="domDiff.js"></script>
@@ -38,38 +34,41 @@
       el: app,
       data: {
         model: 'model',
-        list: []
+        list: [1, 2].concat(Array(10).fill(1).map(() => Math.random())),
+        points: '',
       },
       computed: {
-        title: function(){
+        title: function () {
           return new Date
         },
-        nn: function(){
+        nn: function () {
           return this.n + 10
         }
       },
       methods: {
-        update: function() {
+        update: function () {
           function loop(params) {
-            // vm.points = [1,2,3,4,5].map(function(){
-            //   return Math.random()*200 + ' ' +Math.random()*200
-            // }).join(', ')
+            vm.points = [1, 2, 3, 4, 5].map(function () {
+              return Math.random() * 200 + ' ' + Math.random() * 200
+            }).join(', ')
 
-            setTimeout(function(){
+            vm.list[10] = Math.random()
+
+            setTimeout(function () {
               loop()
-            }, 500);
+            }, 1000);
           }
           loop()
         },
-        add: function(){
+        add: function () {
           this.list.push(this.model)
           this.model = ''
         },
-        remove: function(i){
-          this.list.splice(i,1)
+        remove: function (i) {
+          this.list.splice(i, 1)
         }
       },
-      mounted: function() {
+      mounted: function () {
         // this.update()
       }
     })

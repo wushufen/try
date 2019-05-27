@@ -11,6 +11,7 @@
   }
 
   function forEach(arrayLike, fn) {
+    if (!arrayLike) return
     for (var i = 0; i < arrayLike.length; i++) {
       fn.call(this, arrayLike[i], i)
     }
@@ -39,9 +40,11 @@
     return array
   }
 
-  function assign(obj, obj2) {
-    each(obj2, function (value, key) {
-      obj[key] = value
+  function assign(obj) {
+    forEach(arguments, function (arg) {
+      each(arg, function (value, key) {
+        obj[key] = value
+      })
     })
     return obj
   }
@@ -76,15 +79,21 @@
   }
 
   function parse(html) {
-    parse.el = parse.el || document.createElement('div')
+    parse.el = parse.el || document.createElemnt('div')
     parse.el.innerHTML = html
-    return parse.el.children[0]
+    var node = parse.el.children[0]
+    parse.el.removeChild(node) // ie
+    return node
   }
 
-  function getNodeData(node) {
-    var data = {
+  function getVnode(node) {
+    var vnode = {
+      nodeType: node.nodeType,
+      tagName: node.tagName,
+      tag: node.tagName.toLowerCase(),
       ns: node.namespaceURI,
       attrs: {},
+      props: {},
       directives: []
     }
     var attributes = toArray(node.attributes)
@@ -92,19 +101,21 @@
       if (!attribute.specified) return // ie
       var attr = attribute.nodeName
       var value = attribute.nodeValue
+
       // v-bind:title  :title  v-on:click  @click.prevent.stop
       var m = attr.match(/^(:|@|v-([^.]*))([^.]*)(.*)/)
       if (m) {
-        node.removeAttribute(attr)
         var name = m[2]
         if (m[1] === ':') name = 'bind'
         if (m[1] === '@') name = 'on'
         var arg = m[3]
         var mdfs = m[4]
 
+        // {"@key@": "value"} 会在code中解开双引号
         var dir = {
-          attr: attr,
-          value: value,
+          raw: attr,
+          expression: value,
+          '@value@': value,
           name: name,
           arg: arg,
           mdfs: mdfs
@@ -112,16 +123,16 @@
 
         if (name === 'on') {
           if (value.match(/[=();]/)) {
-            dir.value = 'function(){' + value + '}'
+            dir['@value@'] = 'function(){' + value + '}'
           } else {
-            dir.value = 'function(){' + value + '.apply(__vm,arguments)}'
+            dir['@value@'] = 'function(){' + value + '.apply(__vm,arguments)}'
           }
         }
         if (name === 'model') {
-          dir.setModel = 'function(value){' + value + '=value; __vm.$render()}'
+          dir['@setModel@'] = 'function(value){' + value + '=value; __vm.$render()}'
         }
         if (name === 'for') {
-          // (item, i)|item    in|of    list
+          // (item, i) in list
           m = value.match(/(?:\(([^,]+),(\S+?)\)|(\S+))\s+(?:in|of)\s+(\S+)/)
           dir.item = m[1] || m[3]
           dir.index = m[2] || '$index'
@@ -129,79 +140,168 @@
         }
 
         if (/^(for|if)$/.test(name)) {
-          data.directives[name] = dir
+          vnode.directives[name] = dir
+        } else if (name === 'bind') {
+          vnode.props['@' + arg + '@'] = value
         } else {
-          data.directives.push(dir)
+          vnode.directives.push(dir)
         }
       } else {
-        data.attrs[attr] = value
+        vnode.attrs[attr] = value
       }
     })
-    return data
+    return vnode
   }
 
-  function createElement(tag, data, childNodes) {
-    tag = tag.toLowerCase()
-    data = data || {}
-    if (data instanceof Array) {
-      childNodes = data
-      data = {}
+  function createVnode(vnode, children) {
+    vnode = assign({
+      tagName: vnode.tagName,
+      attrs: {},
+      props: {},
+      directives: [],
+      children: []
+      // parentNode: null,
+    }, vnode)
+
+    // ['child', [for...]] => ['child', ...]
+    // 'text' => {nodeType:3, nodeValue:'text'}
+    forEach(children, function (child) {
+      if (child instanceof Array) {
+        forEach(child, function (child) {
+          if (typeof child !== 'object') {
+            child = { nodeType: 3, nodeValue: String(child) }
+          }
+          vnode.children.push(child)
+          // child.parentNode = vnode
+        })
+      } else {
+        if (typeof child !== 'object') {
+          child = { nodeType: 3, nodeValue: String(child) }
+        }
+        vnode.children.push(child)
+        // child.parentNode = vnode
+      }
+    })
+
+    return vnode
+  }
+
+  function createNode(vnode) {
+    if (vnode.nodeType === 3) {
+      return document.createTextNode(vnode.nodeValue)
     }
 
-    // namespaceURI
-    var node = data.ns && document.createElementNS
-      ? document.createElementNS(data.ns, tag)
-      : document.createElement(tag)
+    // createElemnt namespaceURI
+    var tag = vnode.tagName.toLowerCase()
+    var node = vnode.ns && document.createElementNS
+      ? document.createElementNS(vnode.ns, tag)
+      : document.createElemnt(tag)
 
     // attrs
-    if (data.attrs) {
-      for (var attr in data.attrs) {
-        node.setAttribute(attr, data.attrs[attr])
-      }
-    }
+    each(vnode.attrs, function (value, name) {
+      node.setAttribute(name, value)
+    })
 
-    // directives
-    if (data.directives) {
-      forEach(data.directives, function (directive) {
-        var name = directive.name
-        var fn = VM.options.directives[name].bind
-        fn(node, directive)
-      })
-    }
+    // directives.bind
+    each(vnode.directives, function (directive) {
+      var name = directive.name
+      var bind = VM.options.directives[name].bind
+      bind(node, directive, vnode)
+    })
 
-    // childNodes
-    if (childNodes) {
-      forEach(childNodes, function (childNode) {
-        if (childNode instanceof Array) {
-          forEach(childNode, function (childNode) {
-            if (typeof childNode !== 'object') {
-              childNode = document.createTextNode(String(childNode))
-            }
-            node.appendChild(childNode)
-          })
-        } else {
-          if (typeof childNode !== 'object') {
-            childNode = document.createTextNode(String(childNode))
-          }
-          node.appendChild(childNode)
-        }
-      })
-    }
+    // props
+    each(vnode.props, function (value, name) {
+      node[name] = value
+    })
+
+    // children
+    forEach(vnode.children, function (vchild) {
+      var child = createNode(vchild)
+      node.appendChild(child)
+    })
+
+    node.vnode = vnode // dev
     return node
   }
 
-  var __createElement = createElement
+  function diff(node, vnode, parentNode) {
+    parentNode = parentNode || node.parentNode
+    var newNode
+    // +
+    if (!node && vnode) {
+      newNode = createNode(vnode)
+      parentNode.appendChild(newNode)
+    }
+    // -
+    else if (node && !vnode) {
+      parentNode.removeChild(node)
+    }
+    // +-
+    else if (node.nodeType !== vnode.nodeType || node.tagName !== vnode.tagName) {
+      newNode = createNode(vnode)
+      parentNode.replaceChild(newNode, node)
+    }
+    // *text
+    else if (node.nodeType === 3 && node.nodeValue !== vnode.nodeValue) {
+      node.nodeValue = vnode.nodeValue
+    }
+    // *node
+    else if (node.tagName && vnode.tagName) {
+      // directives.update
+      each(vnode.directives, function (directive) {
+        var name = directive.name
+        var update = VM.options.directives[name].update
+        update(node, directive, vnode)
+      })
+      // *props
+      if (node.tagName && vnode.tag) {
+        each(vnode.props, function (value, name) {
+          if (name === 'style') {
+            assign(node.style, value)
+            return
+          }
+          if (name === 'class') {
+            each(value, function (bool, key) {
+              var className = node.className.replace(RegExp('(?:^|\\s+)' + key, 'g'), '')
+              if (bool) {
+                node.className = className ? className + ' ' + key : key
+              } else {
+                node.className = className
+              }
+            })
+            return
+          }
+          var oldValue = node[name]
+          if (value !== oldValue) {
+            node[name] = value
+            if (oldValue && typeof oldValue === 'object') {
+              node.setAttribute(name, value)
+            }
+          }
+        })
+      }
+      // childNodes
+      var children = toArray(node.childNodes)
+      var newChildren = vnode.children
+      var maxLength = Math.max(children.length, newChildren.length)
+      for (var i = 0; i < maxLength; i++) {
+        diff(children[i], newChildren[i], node)
+      }
+    }
+  }
+
+  var __createVnode = createVnode
   var __each = each
   function compile(node) {
     /*
-    createElement('div', {}, [
+    createVnode({tag:'div'}, [
       'textNode',
-      createElement('ul', {}, [
+      createVnode({tag:'ul'}, [
         forEach(list, function(item, index){
-          return createElement('li', {}, [loop, childNodes])
+          return createVnode({tag:'li'}, [loop, childNodes])
         })
       ]),
-      bool? createElement('span', {}, [loop, childNodes]) : ''
+      bool? createVnode({tag:'span'}, [loop, childNodes]) : ''
     ])
     */
     var code = ''
@@ -210,35 +310,32 @@
       if (!code.match(/^$|\[\s*$/)) code += ',\n' // [childNode, ..]
 
       if (node.nodeType === 1) {
-        var nodeData = getNodeData(node)
-        var nodeDataJson = toJson(nodeData)
-        var dirs = nodeData.directives
-
-        nodeDataJson = nodeDataJson.replace(/"value":\s*"((?:\\.|.)*?)"/g, 'value: $1')
-        nodeDataJson = nodeDataJson.replace(/"setModel":\s*"((?:\\.|.)*?)"/g, 'setModel: $1')
-
+        var vnode = getVnode(node)
+        var vnodeJson = toJson(vnode)
+        var dirs = vnode.directives
+        vnodeJson = vnodeJson.replace(/"@(.*?)@":\s*"((?:\\.|.)*?)"/g, '$1: $2') // rutime value
 
         // for if?
-        // forEach(,()=> bool? createElement(,,[..loop..]): "" )
+        // forEach(,()=> bool? createVnode(,,[..loop..]): "" )
         if (dirs['for']) {
           var dir = dirs['for']
           code += 'this.__each(' + dir.list + ',function(' + dir.item + ',' + dir.index + '){return '
         }
         // if
-        // bool? createElement(,,[..loop..]): ""
+        // bool? createVnode(,,[..loop..]): ""
         if (dirs['if']) {
-          code += dirs['if'].value + '? '
+          code += dirs['if'].expression + '? '
         }
 
-        // createElement
-        code += 'this.__createElement("' + node.tagName + '", ' + nodeDataJson + ', [\n'
+        // createVnode
+        code += 'this.__createVnode(' + vnodeJson + ', [\n'
 
         // childNodes
         forEach(toArray(node.childNodes), function (childNode) {
           loop(childNode)
         })
 
-        // end createElement
+        // end createVnode
         code += '])\n'
         // end if
         if (dirs['if']) code += ': ""\n' //: ""
@@ -255,62 +352,6 @@
     }
 
     return code
-  }
-
-  function diff(dom, newDom, parentNode) {
-    parentNode = parentNode || dom.parentNode
-    // +dom
-    if (!dom) {
-      parentNode.appendChild(newDom)
-      return
-    }
-    // -dom
-    if (!newDom) {
-      parentNode.removeChild(dom)
-      return
-    }
-    // *nodeType
-    if (dom.nodeType !== newDom.nodeType) {
-      parentNode.replaceChild(newDom, dom)
-      return
-    }
-    // *tagName
-    if (dom.nodeType === 1) {
-      if (dom.tagName !== newDom.tagName) {
-        parentNode.replaceChild(newDom, dom)
-        return
-      }
-    }
-    // *text
-    if (dom.nodeType === 3) {
-      if (dom.nodeValue !== newDom.nodeValue) {
-        dom.nodeValue = newDom.nodeValue
-      }
-      return
-    }
-    // *attr
-    var attributes = toArray(newDom.attributes)//.concat(toArray(dom.attributes))
-    forEach(attributes, function (attribute) {
-      if (!attribute.specified) return // ie
-      var attr = attribute.nodeName
-      var value = dom.getAttribute(attr)
-      var newValue = newDom.getAttribute(attr)
-      if (value !== null && newValue === null) {
-        dom.removeAttribute(attr)
-      } else if (value !== newValue) {
-        dom.setAttribute(attr, newValue)
-        if(attr === 'class'){ // ie
-          dom.className = newValue
-        }
-      }
-    })
-    // *children
-    var childNodes = toArray(dom.childNodes)
-    var newChildNodes = toArray(newDom.childNodes)
-    var maxLength = Math.max(childNodes.length, newChildNodes.length)
-    for (var i = 0; i < maxLength; i++) {
-      diff(childNodes[i], newChildNodes[i], dom)
-    }
   }
 
   function injectRender(vm, fn) {
@@ -363,29 +404,6 @@
     var vm = this
     vm.$options = options || (options = {})
 
-    // el || template
-    vm.$el = options.el || parse(options.template)
-
-    // render
-    var code = compile(vm.$el)
-    var render = new Function('var __vm=this;with(__vm){return ' + code + '}')
-    var timer
-    vm.$render = function () {
-      // update computed
-      each(options.computed, function (fn, key) {
-        vm[key] = fn.call(vm)
-      })
-
-      // update view
-      cancelAnimationFrame(timer)
-      timer = requestAnimationFrame(function () {
-        var newDom = render.call(vm)
-        diff(vm.$el, newDom)
-      })
-    }
-    vm.$render.render = render
-    vm.$el.innerHTML = ''
-
     // data
     var data = options.data
     if (typeof data === 'function') data = data.call(vm)
@@ -396,9 +414,29 @@
       vm[key] = injectRender(vm, fn)
     })
 
-    // computed
+    // el || template
+    vm.$el = options.el || parse(options.template)
 
-    // watch
+    // render
+    var code = compile(vm.$el)
+    var render = new Function('var __vm=this;with(__vm){return ' + code + '}')
+    var timer
+    vm.$el.innerHTML = ''
+    vm.$render = function () {
+      // update computed
+      each(options.computed, function (fn, key) {
+        vm[key] = fn.call(vm)
+      })
+
+      // update view
+      cancelAnimationFrame(timer)
+      timer = requestAnimationFrame(function () {
+        var newVnode = render.call(vm)
+        diff(vm.$el, newVnode)
+        vm.__newVnode = newVnode
+      })
+    }
+    vm.$render.render = render
 
     // created
 
@@ -409,28 +447,27 @@
         vm.mounted()
       }, 0)
     }
-
     vm.$render()
 
     // proxy
-    // if (typeof Proxy === 'function') {
-    //   return new Proxy(vm, {
-    //     set: function (vm, key, val) {
-    //       vm[key] = val
-    //       vm.$render()
-    //     },
-    //     get: function (vm, key) {
-    //       var val = vm[key]
-    //       vm.$render()
-    //       return val
-    //     }
-    //   })
-    // }
+    if (typeof Proxy === 'function') {
+      return new Proxy(vm, {
+        set: function (vm, key, val) {
+          vm[key] = val
+          vm.$render()
+        },
+        get: function (vm, key) {
+          var val = vm[key]
+          vm.$render()
+          return val
+        }
+      })
+    }
   }
 
   VM.prototype = {
     constructor: VM,
-    __createElement: createElement,
+    __createVnode: createVnode,
     __each: each
   }
 
@@ -448,26 +485,7 @@
     VM.options.directives[name] = definition
   }
 
-  // props
-  VM.directive('bind', function (el, binding) {
-    var arg = binding.arg, value = binding.value
-    if (arg === 'class') {
-      each(value, function (bool, key) {
-        if (bool) {
-          el.className += el.className ? ' ' + key : key
-        } else {
-          el.className = el.className.replace(RegExp('^|\\s+'+key, 'g'), '')
-        }
-      })
-      return
-    }
-    if (arg === 'style') {
-      assign(el.style, value)
-      return
-    }
-    el.setAttribute(arg, String(value))
-    // el[binding.arg] = binding.value  // todo: bind is props, not attribute
-  })
+  // :xxx VM.directive('bind') => vnode.props
 
   VM.directive('on', function (el, binding) {
     el['on' + binding.arg] = function (e) {
@@ -475,9 +493,9 @@
     }
   })
 
-  VM.directive('model', function (el, binding) {
-    el.value = binding.value
-    el.onkeydownx = el.onkeyup = el.oninput = function () {
+  VM.directive('model', function (el, binding, vnode) {
+    vnode.props.value = binding.value
+    el.onkeyupxx = el.oninput = function () {
       binding.setModel(el.value)
     }
   })
