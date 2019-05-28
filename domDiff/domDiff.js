@@ -1,4 +1,12 @@
-
+// VM构造函数
+// 辅助函数
+// vnode虚拟节点与真实节点
+// compile编译
+// dom diff算法
+// directive指令
+// 双向绑定之model到view
+// 双向绑定之view到model
+// compoment组件
 
 (function(window, document){
   var requestAnimationFrame = window.requestAnimationFrame
@@ -270,64 +278,20 @@
     })
   }
 
-  // node => dom diff update
-  function diff(node, vnode, parentNode) {
-    if (node && (!node.parentNode || node.parentNode.nodeType !== 1)) { // out of document
-      return
-    }
-    parentNode = parentNode || node.parentNode
-    var newNode
-    // +
-    if (!node && vnode) {
-      newNode = createNode(vnode)
-      parentNode.appendChild(newNode)
-    }
-    // -
-    else if (node && !vnode) {
-      parentNode.removeChild(node)
-    }
-    // +- *nodeType || *tagName
-    else if (node.tagName !== vnode.tagName) {
-      newNode = createNode(vnode)
-      parentNode.replaceChild(newNode, node)
-    }
-    // *text
-    else if (node.nodeType === 3 && node.nodeValue !== vnode.nodeValue) {
-      node.nodeValue = vnode.nodeValue
-    }
-    // *node
-    else if (node.tagName && vnode.tagName) {
-      // directives.update
-      each(vnode.directives, function (directive) {
-        var name = directive.name
-        var update = VM.options.directives[name].update
-        update(node, directive, vnode)
-      })
-      // *props
-      if (node.tagName && vnode.tagName) {
-        setProps(node, vnode.props)
-      }
-      // childNodes
-      var childNodes = toArray(node.childNodes)
-      var newChildren = vnode.childNodes
-      var maxLength = Math.max(childNodes.length, newChildren.length)
-      for (var i = 0; i < maxLength; i++) {
-        diff(childNodes[i], newChildren[i], node)
-      }
-    }
-  }
-
   // node => render() => vnode
   function compile(node) {
     /*
     createVnode({tagName:'div'}, [
       'textNode',
       createVnode({tagName:'ul'}, [
-        forEach(list, function(item, index){
+        each(list, function(item, index){
           return createVnode({tagName:'li'}, [ loop ])
         })
       ]),
-      bool? createVnode({tagName:'span'}, [ loop ]) : ''
+      bool? createVnode({tagName:'span'}, [ loop ]) : '',
+      function component(){
+        return createVnode()
+      }
     ])
     */
     var code = ''
@@ -390,6 +354,53 @@
 
     var render = Function('data', 'var __vm=this;with(__vm){return ' + code + '}')
     return render
+  }
+
+  // node => dom diff update
+  function diff(node, vnode, parentNode) {
+    if (node && (!node.parentNode || node.parentNode.nodeType !== 1)) { // out of document
+      return
+    }
+    parentNode = parentNode || node.parentNode
+    var newNode
+    // +
+    if (!node && vnode) {
+      newNode = createNode(vnode)
+      parentNode.appendChild(newNode)
+    }
+    // -
+    else if (node && !vnode) {
+      parentNode.removeChild(node)
+    }
+    // +- *nodeType || *tagName
+    else if (node.tagName !== vnode.tagName) {
+      newNode = createNode(vnode)
+      parentNode.replaceChild(newNode, node)
+    }
+    // *text
+    else if (node.nodeType === 3 && node.nodeValue !== vnode.nodeValue) {
+      node.nodeValue = vnode.nodeValue
+    }
+    // *node
+    else if (node.tagName && vnode.tagName) {
+      // directives.update
+      each(vnode.directives, function (directive) {
+        var name = directive.name
+        var update = VM.options.directives[name].update
+        update(node, directive, vnode)
+      })
+      // *props
+      if (node.tagName && vnode.tagName) {
+        setProps(node, vnode.props)
+      }
+      // childNodes
+      var childNodes = toArray(node.childNodes)
+      var newChildren = vnode.childNodes
+      var maxLength = Math.max(childNodes.length, newChildren.length)
+      for (var i = 0; i < maxLength; i++) {
+        diff(childNodes[i], newChildren[i], node)
+      }
+    }
   }
 
   // fn => fn() vm.$render()
