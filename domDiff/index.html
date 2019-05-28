@@ -18,7 +18,7 @@
     <input v-model="model">
     <h1 :title="model">{{model}}</h1>
     <ul>
-      <li v-for="(item,i) in list" v-if="item" :style="{xwidth:item+'px'}" :class="{active:item<0.3}">
+      <li v-for="(item,i) in list" v-if="item" :style="{xwidth:item+'px'}" :class="{xactive:item<0.3}">
         {{item}}
         <button @click="remove(i)">-</button>
       </li>
@@ -32,10 +32,14 @@
   <script>
     var vm = new VM({
       el: app,
+      xrender: function (h) {
+        return h({ tagName: 'div' }, ['abc', h({ tagName: 'ul' }, [{ tagName: 'li' }])])
+      },
       data: {
         model: 'model',
-        list: [1, 2].concat(Array(1).fill(1).map(() => Math.random())),
+        list: [1, 2],
         points: '',
+        n: 1000
       },
       computed: {
         title: function () {
@@ -48,14 +52,14 @@
       methods: {
         update: function () {
           function loop(params) {
-            vm.points = Array(1000).fill(1).map(function () {
-              return Math.random() * 200 + ' ' + Math.random() * 200
-            }).join(', ')
+            // vm.points = Array(1000).fill(1).map(function () {
+            //   return Math.random() * 200 + ' ' + Math.random() * 200
+            // }).join(', ')
 
             vm.list[1] = Math.random()
             vm.model = +new Date
 
-            setTimeout(function () {
+            window.setTimeout(function () {
               loop()
             }, vm.n)
           }
@@ -70,6 +74,7 @@
         }
       },
       mounted: function () {
+        console.log('mounted')
         this.update()
       }
     })
