@@ -18,7 +18,7 @@
     <input v-model="model">
     <h1 :title="model">{{model}}</h1>
     <ul>
-      <li v-for="(item,i) in list" v-if="item" :style="{width:item+'px'}" :class="{active:item==10}">
+      <li v-for="(item,i) in list" v-if="item" :style="{xwidth:item+'px'}" :class="{active:item<0.3}">
         {{item}}
         <button @click="remove(i)">-</button>
       </li>
@@ -34,7 +34,7 @@
       el: app,
       data: {
         model: 'model',
-        list: [1, 2].concat(Array(10).fill(1).map(() => Math.random())),
+        list: [1, 2].concat(Array(1).fill(1).map(() => Math.random())),
         points: '',
       },
       computed: {
@@ -48,15 +48,16 @@
       methods: {
         update: function () {
           function loop(params) {
-            vm.points = [1, 2, 3, 4, 5].map(function () {
+            vm.points = Array(1000).fill(1).map(function () {
               return Math.random() * 200 + ' ' + Math.random() * 200
             }).join(', ')
 
-            vm.list[10] = Math.random()
+            vm.list[1] = Math.random()
+            vm.model = +new Date
 
             setTimeout(function () {
               loop()
-            }, 1000);
+            }, vm.n)
           }
           loop()
         },
@@ -69,7 +70,7 @@
         }
       },
       mounted: function () {
-        // this.update()
+        this.update()
       }
     })
   </script>

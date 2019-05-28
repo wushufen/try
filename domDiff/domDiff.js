@@ -41,8 +41,8 @@
   }
 
   function assign(obj) {
-    forEach(arguments, function (arg) {
-      each(arg, function (value, key) {
+    forEach(arguments, function (arg, i) {
+      i > 0 && each(arg, function (value, key) {
         obj[key] = value
       })
     })
@@ -111,11 +111,11 @@
         var arg = m[3]
         var mdfs = m[4]
 
-        // {"@key@": "value"} 会在code中解开双引号
+        // "@#:value" => value 将会在code中解开双引号
         var dir = {
           raw: attr,
           expression: value,
-          '@value@': value,
+          value: '@#:' + value,
           name: name,
           arg: arg,
           mdfs: mdfs
@@ -123,13 +123,13 @@
 
         if (name === 'on') {
           if (value.match(/[=();]/)) {
-            dir['@value@'] = 'function(){' + value + '}'
+            dir.value = '@#:function(){' + value + '}'
           } else {
-            dir['@value@'] = 'function(){' + value + '.apply(__vm,arguments)}'
+            dir.value = '@#:function(){' + value + '.apply(__vm,arguments)}'
           }
         }
         if (name === 'model') {
-          dir['@setModel@'] = 'function(value){' + value + '=value; __vm.$render()}'
+          dir.setModel = '@#:function(value){' + value + '=value; __vm.$render()}'
         }
         if (name === 'for') {
           // (item, i) in list
@@ -142,7 +142,7 @@
         if (/^(for|if)$/.test(name)) {
           vnode.directives[name] = dir
         } else if (name === 'bind') {
-          vnode.props['@' + arg + '@'] = value
+          vnode.props[arg] = '@#:' + value
         } else {
           vnode.directives.push(dir)
         }
@@ -313,7 +313,7 @@
         var vnode = getVnode(node)
         var vnodeJson = toJson(vnode)
         var dirs = vnode.directives
-        vnodeJson = vnodeJson.replace(/"@(.*?)@":\s*"((?:\\.|.)*?)"/g, '$1: $2') // rutime value
+        vnodeJson = vnodeJson.replace(/"@#:((?:\\.|.)*?)"/g, '$1') // rutime value
 
         // for if?
         // forEach(,()=> bool? createVnode(,,[..loop..]): "" )
