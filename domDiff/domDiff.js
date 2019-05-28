@@ -95,8 +95,8 @@
     return node
   }
 
-  // node => vnode 1
-  function getVnode(node) {
+  // node => vnode1
+  function getVnode1(node) {
     var vnode = {
       nodeType: node.nodeType,
       tagName: node.tagName,
@@ -165,16 +165,16 @@
     return vnode
   }
 
-  // vnode + childNodes => vnode tree
-  function createVnode(vnode, childNodes) {
-    vnode = assign({
-      tagName: vnode.tagName,
+  // vnode1 + childNodes => vnode tree
+  function createVnode(vnode1, childNodes) {
+    var vnode = assign({
+      tagName: vnode1.tagName,
       attrs: {},
       props: {},
       directives: [],
       childNodes: []
       // parentNode: null,
-    }, vnode)
+    }, vnode1)
 
     // ['child', [for...]] => ['child', ...]
     // 'text' => {nodeType:3, nodeValue:'text'}
@@ -301,9 +301,9 @@
 
       // parse element
       if (node.nodeType === 1) {
-        var vnode = getVnode(node)
-        var vnodeJson = toJson(vnode)
-        var dirs = vnode.directives
+        var vnode1 = getVnode1(node)
+        var vnodeJson = toJson(vnode1)
+        var dirs = vnode1.directives
         vnodeJson = vnodeJson.replace(/"@~:((?:\\.|.)*?)"/g, '$1') // rutime value without ""
 
         // for if?
