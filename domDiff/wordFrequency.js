@@ -1,4 +1,5 @@
-
+var code = `
+// 从零实现mvvm框架，重写一个轻量的vue并兼容ie6
 
 (function(window, document){
   var requestAnimationFrame = window.requestAnimationFrame
@@ -589,3 +590,22 @@
   }
 
 })(window, document)
+
+`
+
+function fun(string) {
+  var map = {}
+  var r = /\w\w+/g
+  string.replace(r, function (word) {
+    map[word] = (map[word] || 0) + 1
+  })
+  var array = []
+  for (var k in map) {
+    var v = map[k]
+    var kv = {k, v}
+    array.push(kv)
+  }
+  return array.sort((a, b) => b.v - a.v)
+}
+
+console.log(fun(code))
