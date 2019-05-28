@@ -32,9 +32,9 @@
   <script>
     var vm = new VM({
       el: app,
-      xrender: function (h) {
-        return h({ tagName: 'div' }, ['abc', h({ tagName: 'ul' }, [{ tagName: 'li' }])])
-      },
+      // render: function (h) {
+      //   return h('div', [this.model, h('div')])
+      // },
       data: {
         model: 'model',
         list: [1, 2],

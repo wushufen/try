@@ -1,11 +1,13 @@
 // 从零实现mvvm框架，重写一个轻量的vue并兼容ie6
 
-{
-  if (!window.requestAnimationFrame) {
-    var requestAnimationFrame = function (fn) {
+(function(window, document){
+  var requestAnimationFrame = window.requestAnimationFrame
+  var cancelAnimationFrame = window.cancelAnimationFrame
+  if (!requestAnimationFrame) {
+    requestAnimationFrame = function (fn) {
       setTimeout(fn, 0)
     }
-    var cancelAnimationFrame = function (timer) {
+    cancelAnimationFrame = function (timer) {
       clearTimeout(timer)
     }
   }
@@ -155,38 +157,51 @@
     return vnode
   }
 
-  // vnode + children => vnode tree
-  function createVnode(vnode, children) {
+  // vnode + childNodes => vnode tree
+  function createVnode(vnode, childNodes) {
     vnode = assign({
       tagName: vnode.tagName,
       attrs: {},
       props: {},
       directives: [],
-      children: []
+      childNodes: []
       // parentNode: null,
     }, vnode)
 
     // ['child', [for...]] => ['child', ...]
     // 'text' => {nodeType:3, nodeValue:'text'}
-    forEach(children, function (child) {
+    forEach(childNodes, function (child) {
       if (child instanceof Array) {
         forEach(child, function (child) {
           if (typeof child !== 'object') {
             child = { nodeType: 3, nodeValue: String(child) }
           }
-          vnode.children.push(child)
+          vnode.childNodes.push(child)
           // child.parentNode = vnode
         })
       } else {
         if (typeof child !== 'object') {
           child = { nodeType: 3, nodeValue: String(child) }
         }
-        vnode.children.push(child)
+        vnode.childNodes.push(child)
         // child.parentNode = vnode
       }
     })
 
     return vnode
+  }
+
+  // vue createElement => createVnode => vnode
+  function createElement(tag, data, children) {
+    if (data instanceof Array) {
+      children = data
+      data = {}
+    }
+    data = assign({
+      tagName: tag.toUpperCase(),
+      nodeType: 1
+    }, data)
+    return createVnode(data, children)
   }
 
   // vnode tree => node tree
@@ -216,8 +231,8 @@
     // props
     setProps(node, vnode.props)
 
-    // children
-    forEach(vnode.children, function (vchild) {
+    // childNodes
+    forEach(vnode.childNodes, function (vchild) {
       var child = createNode(vchild)
       node.appendChild(child)
     })
@@ -271,8 +286,8 @@
     else if (node && !vnode) {
       parentNode.removeChild(node)
     }
-    // +-
-    else if (node.nodeType !== vnode.nodeType || node.tagName !== vnode.tagName) {
+    // +- *nodeType || *tagName
+    else if (node.tagName !== vnode.tagName) {
       newNode = createNode(vnode)
       parentNode.replaceChild(newNode, node)
     }
@@ -293,11 +308,11 @@
         setProps(node, vnode.props)
       }
       // childNodes
-      var children = toArray(node.childNodes)
-      var newChildren = vnode.children
-      var maxLength = Math.max(children.length, newChildren.length)
+      var childNodes = toArray(node.childNodes)
+      var newChildren = vnode.childNodes
+      var maxLength = Math.max(childNodes.length, newChildren.length)
       for (var i = 0; i < maxLength; i++) {
-        diff(children[i], newChildren[i], node)
+        diff(childNodes[i], newChildren[i], node)
       }
     }
   }
@@ -373,7 +388,7 @@
       }
     }
 
-    var render = new Function('data', 'var __vm=this;with(__vm){return ' + code + '}')
+    var render = Function('data', 'var __vm=this;with(__vm){return ' + code + '}')
     return render
   }
 
@@ -448,11 +463,25 @@
       }
     })
 
-    // $el: el || parse
-    vm.$el = options.el || parse(options.template)
+    // $el
+    if (options.el) {
+      vm.$el = options.el
+    }
+
+    // tpl
+    var tplNode = options.el
+    if (options.template) {
+      tplNode = parse(options.template)
+    }
 
     // render: options.render || compile
-    var render = options.render || (options.render = compile(vm.$el))
+    var render = options.render
+    if (!render) {
+      tplNode = tplNode || {}
+      render = options.render = compile(tplNode)
+    }
+
+    // async render
     vm.$render = function () {
       // update computed
       // each(options.computed, function (fn, key) {
@@ -464,12 +493,14 @@
       // dom diff update view
       cancelAnimationFrame(render.timer)
       render.timer = requestAnimationFrame(function () {
-        var vnode = options.__vnode = render.call(vm, createVnode)
-        diff(vm.$el, vnode)
+        var vnode = options.__vnode = render.call(vm, createElement)
+        if (vm.$el) {
+          diff(vm.$el, vnode)
+        }
       })
     }
 
-    // call hooks
+    // async call hooks
     requestAnimationFrame(function () {
       // created hook
       vm.created && vm.created()
@@ -480,7 +511,7 @@
       }
     })
 
-    // test: proxy
+    // test: return proxy
     if (typeof Proxy === 'function') {
       return new Proxy(vm, {
         set: function (vm, key, val) {
@@ -488,9 +519,8 @@
           vm.$render()
         },
         get: function (vm, key) {
-          var val = vm[key]
           vm.$render()
-          return val
+          return vm[key]
         }
       })
     }
@@ -520,8 +550,8 @@
 
   // define directive: v-directive
   // definition
-  //   bind: call by createNode
-  //   update: call by diff
+  //   bind -> createNode
+  //   update -> diff
   VM.directive = function (name, definition) {
     if (typeof definition === 'function') {
       definition = {
@@ -550,4 +580,12 @@
     }
   })
 
-}
+  // exports
+  if (typeof module === 'object') {
+    module.exports = VM
+  } else {
+    window.VM = VM
+    window.Vue = VM
+  }
+
+})(window, document)
