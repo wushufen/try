@@ -286,7 +286,7 @@
       if (value !== oldValue) {
         node[name] = value
         // polygon:points ...
-        if (oldValue === 'object') {
+        if (typeof oldValue === 'object') {
           node.setAttribute(name, value)
         }
       }

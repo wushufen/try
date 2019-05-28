@@ -52,9 +52,9 @@
       methods: {
         update: function () {
           function loop(params) {
-            // vm.points = Array(1000).fill(1).map(function () {
-            //   return Math.random() * 200 + ' ' + Math.random() * 200
-            // }).join(', ')
+            vm.points = Array(500).fill(1).map(function () {
+              return Math.random() * 200 + ' ' + Math.random() * 200
+            }).join(', ')
 
             vm.list[1] = Math.random()
             vm.model = +new Date
