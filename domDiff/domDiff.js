@@ -8,6 +8,21 @@
 // 双向绑定之view到model
 // compoment组件
 
+// ====================
+
+// utils
+// parse
+// getVnodeData
+// createVnode
+// createNode
+// setProps
+// compile
+// domDiff
+// injectRender
+// VM
+// VM.directive
+// VM.compoment
+
 (function(window, document){
   var requestAnimationFrame = window.requestAnimationFrame
   var cancelAnimationFrame = window.cancelAnimationFrame
