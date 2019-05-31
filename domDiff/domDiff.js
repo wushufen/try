@@ -20,15 +20,17 @@
 // domDiff
 // injectRender
 // VM
-// VM.directive
-// VM.compoment
+// directive
+// compoment
+// watch
+// computed
 
 (function(window, document){
   var requestAnimationFrame = window.requestAnimationFrame
   var cancelAnimationFrame = window.cancelAnimationFrame
   if (!requestAnimationFrame) {
     requestAnimationFrame = function (fn) {
-      setTimeout(fn, 0)
+      return setTimeout(fn, 0)
     }
     cancelAnimationFrame = function (timer) {
       clearTimeout(timer)
@@ -110,9 +112,9 @@
     return node
   }
 
-  // node => vnode1
-  function getVnode1(node) {
-    var vnode = {
+  // node => vnodeData
+  function getVnodeData(node) {
+    var vnodeData = {
       nodeType: node.nodeType,
       tagName: node.tagName,
       ns: node.namespaceURI,
@@ -167,29 +169,29 @@
         }
 
         if (/^(for|if)$/.test(name)) {
-          vnode.directives[name] = dir
+          vnodeData.directives[name] = dir
         } else if (name === 'bind') {
-          vnode.props[arg] = '@~:' + value
+          vnodeData.props[arg] = '@~:' + value
         } else {
-          vnode.directives.push(dir)
+          vnodeData.directives.push(dir)
         }
       } else {
-        vnode.attrs[attr] = value
+        vnodeData.attrs[attr] = value
       }
     })
-    return vnode
+    return vnodeData
   }
 
-  // vnode1 + childNodes => vnode tree
-  function createVnode(vnode1, childNodes) {
+  // vnodeData + childNodes => vnode tree
+  function createVnode(vnodeData, childNodes) {
     var vnode = assign({
-      tagName: vnode1.tagName,
+      tagName: vnodeData.tagName,
       attrs: {},
       props: {},
       directives: [],
       childNodes: []
       // parentNode: null,
-    }, vnode1)
+    }, vnodeData)
 
     // ['child', [for...]] => ['child', ...]
     // 'text' => {nodeType:3, nodeValue:'text'}
@@ -316,9 +318,9 @@
 
       // parse element
       if (node.nodeType === 1) {
-        var vnode1 = getVnode1(node)
-        var vnodeJson = toJson(vnode1)
-        var dirs = vnode1.directives
+        var vnodeData = getVnodeData(node)
+        var vnodeJson = toJson(vnodeData)
+        var dirs = vnodeData.directives
         vnodeJson = vnodeJson.replace(/"@~:((?:\\.|.)*?)"/g, '$1') // rutime value without ""
 
         // for if?
