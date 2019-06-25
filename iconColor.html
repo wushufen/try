@@ -1,0 +1,253 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    table {
+      width: 100%;
+    }
+
+    td:nth-child(2) {
+      font-size: 50px;
+    }
+
+    td:nth-child(3) {
+      white-space: pre-line;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    td style {
+      font-size: 12px;
+      display: block;
+      height: 100px;
+      overflow: auto;
+      white-space: pre-wrap;
+      -webkit-user-modify: read-write-plaintext-only;
+      font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+      background: #272822;
+      color: #fff;
+      padding: .125em .5em;
+      border-radius: .25em;
+      margin: 1px;
+      transition: 1s;
+    }
+
+    td style:hover,
+    td style:focus {
+      height: 300px;
+    }
+  </style>
+</head>
+
+<!-- 参考并改进了： https://www.zhangxinxu.com/wordpress/2016/06/png-icon-change-color-by-css/ -->
+
+<body>
+  <table>
+    <tr>
+      <td>
+        <style>
+          mask {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            -webkit-mask: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
+            -webkit-mask-size: 100% 100%;
+            background: #0af;
+          }
+
+          mask:hover {
+            background: #0f8;
+          }
+        </style>
+      </td>
+      <td>
+        <mask></mask>
+      </td>
+      <td>
+        mask
+        此方案通过 background 来改变颜色，不如 color 直观
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <style>
+          filter {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            background: center no-repeat;
+            background-size: contain;
+            background-image: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
+            filter: invert(49%) sepia(38%) saturate(5097%) hue-rotate(176deg) brightness(107%) contrast(104%);
+          }
+
+          filter:hover {
+            filter: invert(14%) sepia(79%) saturate(7334%) hue-rotate(4deg) brightness(99%) contrast(120%);
+          }
+        </style>
+      </td>
+      <td>
+        <filter></filter>
+      </td>
+      <td>
+        filter
+        转换比较麻烦
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <style>
+          drop-shadow-posistion-right {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            position: relative;
+            right: 100em;
+            filter: drop-shadow(100em 0);
+            background-image: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
+            background-size: contain;
+            color: #0af;
+          }
+
+          td:hover drop-shadow-posistion-right {
+            color: #0f8;
+          }
+        </style>
+      </td>
+      <td>
+        <drop-shadow-posistion-right></drop-shadow-posistion-right>
+      </td>
+      <td>
+        drop-shadow-posistion-right
+        元素不在原位置，无法点击
+        20190624 稍旧浏览器，当元素在页面不可见时， drop-shadow 不会绘制，所以会变成空白
+        元素在页面外时过渡会闪
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <style>
+          drop-shadow-translate {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            transform: translateX(-100em);
+            filter: drop-shadow(100em 0);
+            background-image: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
+            background-size: contain;
+            color: #0af;
+          }
+
+          td:hover drop-shadow-translate {
+            color: #0f8;
+          }
+        </style>
+      </td>
+      <td>
+        <drop-shadow-translate></drop-shadow-translate>
+      </td>
+      <td>
+        元素不在原位置，无法点击
+        translate 同样在稍旧浏览器中，当元素不在页面可视范围不绘制 drop-shadow
+        元素在页面外时过渡会闪
+        效果同 drop-shadow-posistion-right, 但 translate 和 drop-shadow 可同时降级
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <style>
+          drop-shadow-before-border-transparent {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            overflow: hidden;
+            transition: 0s; /* hack 触发颜色继承重绘 */
+            color: #0af;
+          }
+
+          drop-shadow-before-border-transparent:before {
+            content: "";
+            display: block;
+            height: 100%;
+            box-sizing: content-box;
+            border-top: solid 4em transparent;
+            filter: drop-shadow(0 -4em);
+            background: center no-repeat;
+            background-size: contain;
+            background-image: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
+          }
+
+          drop-shadow-before-border-transparent:hover {
+            color: #0f8;
+          }
+        </style>
+      </td>
+      <td>
+        <drop-shadow-before-border-transparent></drop-shadow-before-border-transparent>
+      </td>
+      <td>
+        通过 before border transparent 偏移并且 border 使元素在页面可视范围，通过 overflow 隐藏原图标
+        20190625(chrome,firefox) 二次改变颜色继承失效，须直接修改 before 的颜色。已解决：
+        1.通过不同状态设置不同属性触发重绘, 2.transition能触发颜色继承重绘
+        比较好了，但 border-top 和 drop-shadow 不同 css 版本，需另外做降低
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <style>
+          [class*="icon-"] {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            overflow: hidden;
+            transition: 0s; /* hack 触发颜色继承重绘 */
+          }
+
+          [class*="icon-"]:before {
+            content: "";
+            display: block;
+            height: 100%;
+            transform: translateY(2em);
+            filter: drop-shadow(0 -2em);
+            background: center no-repeat;
+            background-size: contain;
+          }
+
+          /* hack 触发颜色继承重绘 */
+          /* :hover [class*="icon-"]:before {
+            width: 100%;
+          } */
+
+          .icon-bell:before {
+            background-image: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
+          }
+
+          .icon-bell{
+            color: #0af;
+          }
+          .icon-bell:hover {
+            color: #0f8;
+          }
+        </style>
+      </td>
+      <td>
+        <i class="icon-bell"></i>
+      </td>
+      <td>
+        drop-shadow-before-translate
+        通过 before translate 偏移较小距离，仍在页面可视范围，通过 overflow 隐藏原图
+        20190625(chrome,firefox) 二次改变颜色继承失效，须直接修改 before 的颜色。已解决：
+        1.通过不同状态设置不同属性触发重绘, 2.transition能触发颜色继承重绘
+        translate 和 drop-shadow 都是 css3 ，同时生效，不生效时则为自动降低为不变色的图标
+        已经比较完美
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>

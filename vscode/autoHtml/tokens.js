@@ -1,5 +1,0 @@
-var state = {
-  data: {
-    children: []
-  },
-}
