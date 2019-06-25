@@ -166,7 +166,8 @@
             width: 1em;
             height: 1em;
             overflow: hidden;
-            transition: 0s; /* hack 触发颜色继承重绘 */
+            transition: initial;
+            /* hack1 触发颜色继承重绘 */
             color: #0af;
           }
 
@@ -181,6 +182,11 @@
             background-size: contain;
             background-image: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
           }
+
+          /* hack2 触发颜色继承重绘 */
+          /* :hover drop-shadow-before-border-transparent:before {
+            width: 100%;
+          } */
 
           drop-shadow-before-border-transparent:hover {
             color: #0f8;
@@ -205,7 +211,7 @@
             width: 1em;
             height: 1em;
             overflow: hidden;
-            transition: 0s; /* hack 触发颜色继承重绘 */
+            transition: initial;
           }
 
           [class*="icon-"]:before {
@@ -218,18 +224,14 @@
             background-size: contain;
           }
 
-          /* hack 触发颜色继承重绘 */
-          /* :hover [class*="icon-"]:before {
-            width: 100%;
-          } */
-
           .icon-bell:before {
             background-image: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
           }
 
-          .icon-bell{
+          .icon-bell {
             color: #0af;
           }
+
           .icon-bell:hover {
             color: #0f8;
           }
