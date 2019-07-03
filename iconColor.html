@@ -46,6 +46,8 @@
 
 <!-- 参考并改进了： https://www.zhangxinxu.com/wordpress/2016/06/png-icon-change-color-by-css/ -->
 
+ios(20190628) drop-shadow 不支持默认为 color
+
 <body>
   <table>
     <tr>
@@ -80,8 +82,7 @@
             display: inline-block;
             width: 1em;
             height: 1em;
-            background: center no-repeat;
-            background-size: contain;
+            background: center/contain no-repeat;
             background-image: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
             filter: invert(49%) sepia(38%) saturate(5097%) hue-rotate(176deg) brightness(107%) contrast(104%);
           }
@@ -178,8 +179,7 @@
             box-sizing: content-box;
             border-top: solid 4em transparent;
             filter: drop-shadow(0 -4em);
-            background: center no-repeat;
-            background-size: contain;
+            background: center/contain no-repeat;
             background-image: url(https://gz-static-1257236698.cos.ap-guangzhou.myqcloud.com/bnx/imgs/icon/bell.png);
           }
 
@@ -220,8 +220,7 @@
             height: 100%;
             transform: translate(-1em);
             filter: drop-shadow(1em 0);
-            background: center no-repeat;
-            background-size: contain;
+            background: center/contain no-repeat;
           }
 
           .icon-bell:before {
