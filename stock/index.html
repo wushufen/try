@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="https://cdn.bootcss.com/echarts/4.2.1-rc1/echarts.js"></script>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.js"></script> -->
+  <script src="https://wusfen.github.io/ajax.js/ajax.js"></script>
+</head>
+
+<body>
+
+  <div id="main" style="width: 600px;height:400px;"></div>
+  <pre id="output"></pre>
+
+  <script type="text/javascript">
+    var myChart = echarts.init(document.getElementById('main'))
+  </script>
+  <script>
+    document.cookie = 'xq_a_token=9ab1216079de9f926f3490f9468759693be2c704'
+    document.cookie = 'u=1262011434'
+
+    // 涨速榜
+    'https://stock.xueqiu.com/v5/stock/screener/quote/list.json?market=CN&type=sh_sz&page=1&size=50&order_by=percent5m&order=desc'
+
+    'https://stock.xueqiu.com/v5/stock/chart/kline.json?count=-517&begin=1562243956272&x=0.152&type=before&symbol=SZ002247&indicator=kline,pb,pe,ps,pcf,market_capital,agt,ggt,balance&period=day'
+
+    ajax({
+      url: 'https://stock.xueqiu.com/v5/stock/chart/kline.json?count=-1517&begin=1562243956272&x=0.152&type=before&symbol=SZ002247&indicator=kline,pb,pe,ps,pcf,market_capital,agt,ggt,balance&period=day',
+      success: function (res) {
+        var column = res.data.column
+        var item = res.data.item
+        var list = []
+        item.forEach(one => {
+          var obj = {}
+          column.forEach((key, i) => {
+            obj[key] = one[i]
+          })
+          list.push(obj)
+        })
+
+        console.log(list)
+
+        myChart.setOption({
+          legend: {},
+          tooltip: {},
+          dataset: {
+            dimensions: ['timestamp', 'open', 'close', 'high', 'low'],
+            source: list
+          },
+          xAxis: { type: 'category' },
+          yAxis: {},
+          series: [
+            { type: 'line' },
+            { type: 'line' },
+            { type: 'line' },
+            { type: 'line' },
+          ]
+        })
+      }
+    })
+
+  </script>
+
+</body>
+
+</html>
