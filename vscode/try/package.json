@@ -34,7 +34,7 @@
 		"@types/mocha": "^2.2.42"
 	},
 	"dependencies": {
-		"jsdom": "^15.0.0",
+		"jsdom": "^16.5.0",
 		"parse5": "^5.1.0",
 		"scss-parser": "^1.0.3"
 	}
